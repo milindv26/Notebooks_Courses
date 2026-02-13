@@ -16,3 +16,4 @@
 14. You roll a fair 6-sided die twice. Calculate the probability that the value of the first roll is strictly less than the value of the second roll.
 15. Let $x_0 = 0$ and let $x_1, \dots, x_{10}$ satisfy$|x_i - x_{i-1}| = 1 \quad \text{for } 1 \le i \le 10,$ with $x_{10} = 4$. How many such sequences are there satisfying these conditions?
 16. You toss a fair coin 100 times and record the outcomes. How many runs will you have on average? A run is classified as the longest continuous flips of heads or tails.
+17. You are given 9 identical-looking coins, one of which is heavier than the other eight, and using a balance scale no more than twice, determine which coin is the heavier one.
