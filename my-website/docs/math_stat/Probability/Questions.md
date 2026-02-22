@@ -17,3 +17,4 @@
 15. Let $x_0 = 0$ and let $x_1, \dots, x_{10}$ satisfy$|x_i - x_{i-1}| = 1 \quad \text{for } 1 \le i \le 10,$ with $x_{10} = 4$. How many such sequences are there satisfying these conditions?
 16. You toss a fair coin 100 times and record the outcomes. How many runs will you have on average? A run is classified as the longest continuous flips of heads or tails.
 17. You are given 9 identical-looking coins, one of which is heavier than the other eight, and using a balance scale no more than twice, determine which coin is the heavier one.
+18. There are 25 horses among which you need to find out the fastest 3 horses. You can conduct a race among at most 5 to find out their relative speed. At no point can you find out the actual speed of the horse in a race. Find out the minimum no. of races which are required to get the top 3 horses
