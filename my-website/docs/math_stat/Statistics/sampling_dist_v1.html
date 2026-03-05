@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sampling Distribution Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c18;
+  --panel: #0f1623;
+  --panel2: #162032;
+  --border: #1d2d44;
+  --c1: #38bdf8;
+  --c2: #f472b6;
+  --c3: #a78bfa;
+  --c4: #34d399;
+  --text: #dde4f0;
+  --muted: #556070;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  display: flex; flex-direction: column;
+}
+header {
+  flex-shrink: 0;
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 18px;
+  background: linear-gradient(180deg, rgba(56,189,248,0.06) 0%, transparent 100%);
+}
+header h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 1.4rem; font-weight: 300; color: var(--c1);
+}
+header p { color: var(--muted); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; }
+
+.layout {
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: 248px 1fr;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--panel);
+  padding: 16px 13px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.sec { font-size: 0.57rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.ctrl-group { display: flex; flex-direction: column; gap: 9px; }
+.ctrl label { font-size: 0.67rem; color: var(--muted); display: flex; justify-content: space-between; margin-bottom: 3px; }
+.ctrl label span { color: var(--c1); }
+select {
+  width: 100%; background: var(--panel2); border: 1px solid var(--border);
+  color: var(--text); padding: 6px 10px; border-radius: 6px;
+  font-family: 'DM Mono', monospace; font-size: 0.7rem; cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23556070'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+}
+select:focus { outline: none; border-color: var(--c1); }
+input[type=range] {
+  width: 100%; -webkit-appearance: none; height: 3px;
+  background: var(--border); border-radius: 2px; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%;
+  background: var(--c1); border: 2px solid var(--bg);
+  box-shadow: 0 0 6px var(--c1);
+}
+hr { border: none; border-top: 1px solid var(--border); }
+.btn-col { display: flex; flex-direction: column; gap: 6px; }
+button {
+  font-family: 'DM Mono', monospace; font-size: 0.69rem;
+  padding: 8px 12px; border-radius: 6px; cursor: pointer;
+  border: none; letter-spacing: 0.04em; font-weight: 500; transition: all .15s;
+}
+.btn-run { background: var(--c1); color: #080c18; }
+.btn-run:hover { filter: brightness(1.12); box-shadow: 0 0 16px rgba(56,189,248,0.4); }
+.btn-run:disabled { opacity: 0.38; cursor: not-allowed; filter: none; box-shadow: none; }
+.btn-step { background: transparent; color: var(--c2); border: 1px solid var(--c2); }
+.btn-step:hover { background: rgba(244,114,182,0.1); }
+.btn-reset { background: var(--panel2); color: var(--muted); border: 1px solid var(--border); }
+.btn-reset:hover { color: var(--text); }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.stat-card {
+  background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 7px 9px;
+}
+.stat-card .sl { font-size: 0.54rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.stat-card .sv { font-size: 0.9rem; margin-top: 2px; font-weight: 500; color: var(--c1); }
+.stat-card.c2 .sv { color: var(--c2); }
+.stat-card.c3 .sv { color: var(--c3); }
+.stat-card.c4 .sv { color: var(--c4); }
+
+.progress-wrap { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--c1), var(--c3)); border-radius: 2px; transition: width .08s; }
+.run-status { font-size: 0.59rem; color: var(--c4); min-height: 13px; margin-bottom: 3px; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+.running { animation: blink 1s infinite; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 7px; }
+.leg { display: flex; align-items: center; gap: 5px; font-size: 0.57rem; color: var(--muted); }
+.leg-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── Charts ── */
+.charts {
+  display: grid;
+  grid-template-rows: 1fr 1fr 1fr;
+  min-height: 0;
+}
+.chart-row {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  border-bottom: 1px solid var(--border);
+  min-height: 0;
+}
+.chart-row:last-child { border-bottom: none; }
+.row-label {
+  border-right: 1px solid var(--border);
+  padding: 12px 11px;
+  display: flex; flex-direction: column; justify-content: center;
+  background: rgba(255,255,255,0.01); flex-shrink: 0;
+}
+.rl-title { font-family: 'Fraunces', serif; font-size: 0.78rem; margin-bottom: 3px; }
+.rl-sub { font-size: 0.56rem; color: var(--muted); line-height: 1.5; }
+.badge {
+  display: inline-block; font-size: 0.49rem; padding: 2px 6px;
+  border-radius: 20px; margin-top: 6px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500;
+}
+.b1 { background: rgba(56,189,248,0.1); color: var(--c1); border: 1px solid rgba(56,189,248,0.22); }
+.b2 { background: rgba(244,114,182,0.1); color: var(--c2); border: 1px solid rgba(244,114,182,0.22); }
+.b3 { background: rgba(167,139,250,0.1); color: var(--c3); border: 1px solid rgba(167,139,250,0.22); }
+.canvas-wrap { position: relative; min-height: 0; overflow: hidden; }
+canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Sampling Distribution Lab</h1>
+    <p>Central Limit Theorem · Interactive Simulator</p>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+
+    <div>
+      <div class="sec">Population</div>
+      <div class="ctrl-group">
+        <div class="ctrl">
+          <label>Distribution</label>
+          <select id="distSel">
+            <option value="normal">Normal</option>
+            <option value="uniform">Uniform</option>
+            <option value="skewed">Skewed Right</option>
+            <option value="bimodal">Bimodal</option>
+            <option value="exponential">Exponential</option>
+            <option value="ushaped">U-Shaped</option>
+          </select>
+        </div>
+        <div class="ctrl">
+          <label>Mean μ <span id="lmu">50</span></label>
+          <input type="range" id="smu" min="20" max="80" value="50">
+        </div>
+        <div class="ctrl">
+          <label>Std Dev σ <span id="lsigma">12</span></label>
+          <input type="range" id="ssigma" min="3" max="25" value="12">
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div>
+      <div class="sec">Sampling</div>
+      <div class="ctrl-group">
+        <div class="ctrl">
+          <label>Sample size n <span id="ln">30</span></label>
+          <input type="range" id="sn" min="2" max="100" value="30">
+        </div>
+        <div class="ctrl">
+          <label>Max samples <span id="ltotal">1000</span></label>
+          <input type="range" id="stotal" min="100" max="5000" value="1000" step="100">
+        </div>
+        <div class="ctrl">
+          <label>Statistic</label>
+          <select id="statSel">
+            <option value="mean">Sample Mean (x̄)</option>
+            <option value="median">Sample Median</option>
+            <option value="sd">Sample SD (s)</option>
+            <option value="max">Sample Maximum</option>
+            <option value="range">Sample Range</option>
+          </select>
+        </div>
+        <div class="ctrl">
+          <label>Speed <span id="lspeed">Medium</span></label>
+          <input type="range" id="sspeed" min="1" max="4" value="2">
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div>
+      <div class="run-status" id="runStatus"></div>
+      <div class="progress-wrap"><div class="progress-bar" id="progBar"></div></div>
+      <div class="btn-col" style="margin-top:8px">
+        <button class="btn-run"   id="runBtn">▶  Run Simulation</button>
+        <button class="btn-step"  id="stepBtn">+  Draw 1 Sample</button>
+        <button class="btn-reset" id="resetBtn">↺  Reset</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <div>
+      <div class="sec">Live Statistics</div>
+      <div class="stats-grid">
+        <div class="stat-card">    <div class="sl">Pop mean</div>    <div class="sv" id="sv-mu">50</div></div>
+        <div class="stat-card">    <div class="sl">Pop SD</div>    <div class="sv" id="sv-sigma">12</div></div>
+        <div class="stat-card c2"> <div class="sl">Samp mean</div><div class="sv" id="sv-smean">—</div></div>
+        <div class="stat-card c2"> <div class="sl">Samp SD</div>  <div class="sv" id="sv-ssd">—</div></div>
+        <div class="stat-card c3"> <div class="sl">Theor SE</div> <div class="sv" id="sv-se">—</div></div>
+        <div class="stat-card c4"> <div class="sl">Samples</div>  <div class="sv" id="sv-count">0</div></div>
+      </div>
+    </div>
+
+    <hr>
+
+    <div>
+      <div class="sec">Legend</div>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:var(--c1)"></div>Population</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--c2)"></div>Last sample</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--c3)"></div>Sampling dist.</div>
+        <div class="leg"><div class="leg-dot" style="background:var(--c4)"></div>Normal fit (CLT)</div>
+      </div>
+    </div>
+
+  </aside>
+
+  <div class="charts">
+    <div class="chart-row">
+      <div class="row-label">
+        <div class="rl-title">Population</div>
+        <div class="rl-sub">Source<br>distribution</div>
+        <div class="badge b1">μ, SD defined</div>
+      </div>
+      <div class="canvas-wrap"><canvas id="cvPop"></canvas></div>
+    </div>
+    <div class="chart-row">
+      <div class="row-label">
+        <div class="rl-title">Last Sample</div>
+        <div class="rl-sub" id="nLabel">n = 30 obs.</div>
+        <div class="badge b2">raw dots</div>
+      </div>
+      <div class="canvas-wrap"><canvas id="cvSamp"></canvas></div>
+    </div>
+    <div class="chart-row">
+      <div class="row-label">
+        <div class="rl-title">Sampling Dist.</div>
+        <div class="rl-sub">Distribution<br>of statistic</div>
+        <div class="badge b3">CLT emerges</div>
+      </div>
+      <div class="canvas-wrap"><canvas id="cvSD"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────────
+const SQRT2PI = Math.sqrt(2 * Math.PI);
+const SQRT3   = Math.sqrt(3);
+const PAD     = { l: 50, r: 16, t: 18, b: 30 };
+const BINS    = 38;
+const SPEED   = { 1:{batch:1,label:'Slow'}, 2:{batch:10,label:'Medium'}, 3:{batch:50,label:'Fast'}, 4:{batch:250,label:'Max'} };
+
+// ── State ──────────────────────────────────────────────────────────────────────
+const S = {
+  dist:'normal', mu:50, sigma:12, n:30, total:1000, stat:'mean', speed:2,
+  samples:[], lastSample:[],
+  running:false, rafId:null,
+};
+
+// ── RNG ────────────────────────────────────────────────────────────────────────
+function randn() {
+  // Box–Muller
+  let u = 0, v = 0;
+  while (!u) u = Math.random();
+  while (!v) v = Math.random();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+function drawOne() {
+  const { dist, mu, sigma } = S;
+  if (dist === 'normal') {
+    return mu + sigma * randn();
+  }
+  if (dist === 'uniform') {
+    const a = sigma * SQRT3;
+    return mu - a + 2 * a * Math.random();
+  }
+  if (dist === 'skewed') {
+    // Log-normal parameterised so E[X] ≈ mu, SD[X] ≈ sigma
+    // Guard: mu must be positive; cap cv2 to avoid extreme distributions
+    const safeMu = Math.max(mu, 1);
+    const cv2 = Math.min((sigma / safeMu) ** 2, 2); // cap at cv=sqrt(2)
+    const s2  = Math.log(1 + cv2);
+    const m   = Math.log(safeMu) - 0.5 * s2;
+    return Math.exp(m + Math.sqrt(s2) * randn());
+  }
+  if (dist === 'bimodal') {
+    const off = sigma * 0.9;
+    const sd  = sigma * 0.5;
+    return (Math.random() < 0.5 ? mu - off : mu + off) + sd * randn();
+  }
+  if (dist === 'exponential') {
+    // Shifted exponential: mean = mu, SD = sigma
+    // Shift = mu - sigma (clamped to 0 to avoid negative domain)
+    const shift = Math.max(0, mu - sigma);
+    return shift + sigma * (-Math.log(1 - Math.random()));
+  }
+  if (dist === 'ushaped') {
+    // Two-peak mixture well outside centre
+    const off = sigma * 1.8;
+    const sd  = sigma * 0.4;
+    return (Math.random() < 0.5 ? mu - off : mu + off) + sd * randn();
+  }
+}
+
+function drawSample(n) {
+  return Array.from({ length: n }, drawOne);
+}
+
+function computeStat(sample) {
+  const n = sample.length;
+  if (S.stat === 'mean')   return sample.reduce((a, x) => a + x, 0) / n;
+  if (S.stat === 'median') {
+    const s = [...sample].sort((a, b) => a - b);
+    return n % 2 === 0 ? (s[n/2-1] + s[n/2]) / 2 : s[Math.floor(n/2)];
+  }
+  if (S.stat === 'sd') {
+    const m = sample.reduce((a, x) => a + x, 0) / n;
+    return Math.sqrt(sample.reduce((a, x) => a + (x - m) ** 2, 0) / Math.max(n - 1, 1));
+  }
+  if (S.stat === 'max')   return Math.max(...sample);
+  if (S.stat === 'range') return Math.max(...sample) - Math.min(...sample);
+}
+
+// ── Canvas setup ───────────────────────────────────────────────────────────────
+function initCanvas(id) {
+  const canvas = document.getElementById(id);
+  const dpr    = window.devicePixelRatio || 1;
+  const W      = canvas.parentElement.clientWidth;
+  const H      = canvas.parentElement.clientHeight;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, W, H };
+}
+
+// ── Axis drawing ───────────────────────────────────────────────────────────────
+function drawAxes(ctx, W, H, xMin, xMax) {
+  const pw = W - PAD.l - PAD.r;
+  ctx.strokeStyle = '#1d2d44';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD.l, H - PAD.b);
+  ctx.lineTo(W - PAD.r, H - PAD.b);
+  ctx.stroke();
+
+  ctx.fillStyle = '#3d5068';
+  ctx.font = '8px DM Mono';
+  ctx.textAlign = 'center';
+  const nticks = 6;
+  for (let i = 0; i <= nticks; i++) {
+    const v  = xMin + (xMax - xMin) * i / nticks;
+    const px = PAD.l + pw * i / nticks;
+    ctx.beginPath();
+    ctx.strokeStyle = '#1d2d44';
+    ctx.moveTo(px, H - PAD.b);
+    ctx.lineTo(px, H - PAD.b + 4);
+    ctx.stroke();
+    ctx.fillText(v.toFixed(1), px, H - PAD.b + 14);
+  }
+}
+
+// ── Population curve ───────────────────────────────────────────────────────────
+function getPopRange() {
+  const { mu, sigma } = S;
+  return [mu - sigma * 4.2, mu + sigma * 4.2];
+}
+
+function popDensity(x) {
+  const { dist, mu, sigma } = S;
+  if (dist === 'normal') {
+    return Math.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * SQRT2PI);
+  }
+  if (dist === 'uniform') {
+    const a = sigma * SQRT3;
+    return (x >= mu - a && x <= mu + a) ? 1 / (2 * a) : 0;
+  }
+  if (dist === 'skewed') {
+    if (x <= 0) return 0;
+    const safeMu = Math.max(mu, 1);
+    const cv2 = Math.min((sigma / safeMu) ** 2, 2);
+    const s2  = Math.log(1 + cv2);
+    const m   = Math.log(safeMu) - 0.5 * s2;
+    const s   = Math.sqrt(s2);
+    return Math.exp(-0.5 * ((Math.log(x) - m) / s) ** 2) / (x * s * SQRT2PI);
+  }
+  if (dist === 'bimodal') {
+    const off = sigma * 0.9, sd = sigma * 0.5;
+    const d1  = Math.exp(-0.5 * ((x - (mu - off)) / sd) ** 2) / (sd * SQRT2PI);
+    const d2  = Math.exp(-0.5 * ((x - (mu + off)) / sd) ** 2) / (sd * SQRT2PI);
+    return 0.5 * (d1 + d2);
+  }
+  if (dist === 'exponential') {
+    const shift = Math.max(0, mu - sigma);
+    if (x < shift) return 0;
+    const lam = 1 / sigma;
+    return lam * Math.exp(-lam * (x - shift));
+  }
+  if (dist === 'ushaped') {
+    const off = sigma * 1.8, sd = sigma * 0.4;
+    const d1  = Math.exp(-0.5 * ((x - (mu - off)) / sd) ** 2) / (sd * SQRT2PI);
+    const d2  = Math.exp(-0.5 * ((x - (mu + off)) / sd) ** 2) / (sd * SQRT2PI);
+    return 0.5 * (d1 + d2);
+  }
+  return 0;
+}
+
+function drawPop() {
+  const { ctx, W, H } = initCanvas('cvPop');
+  ctx.clearRect(0, 0, W, H);
+  const [xMin, xMax] = getPopRange();
+  drawAxes(ctx, W, H, xMin, xMax);
+
+  const pw    = W - PAD.l - PAD.r;
+  const ph    = H - PAD.t - PAD.b;
+  const steps = Math.max(200, pw * 2 | 0);
+  const xs    = Array.from({ length: steps + 1 }, (_, i) => xMin + (xMax - xMin) * i / steps);
+  const ds    = xs.map(popDensity);
+  const maxD  = Math.max(...ds);
+  if (maxD <= 0) return;
+
+  const grad = ctx.createLinearGradient(0, PAD.t, 0, H - PAD.b);
+  grad.addColorStop(0, 'rgba(56,189,248,0.42)');
+  grad.addColorStop(1, 'rgba(56,189,248,0.03)');
+
+  // Filled shape
+  ctx.beginPath();
+  ctx.moveTo(PAD.l, H - PAD.b);
+  xs.forEach((x, i) => {
+    const px = PAD.l + pw * i / steps;
+    const py = H - PAD.b - (ds[i] / maxD) * ph * 0.88;
+    ctx.lineTo(px, py);
+  });
+  ctx.lineTo(W - PAD.r, H - PAD.b);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Outline
+  ctx.beginPath();
+  xs.forEach((x, i) => {
+    const px = PAD.l + pw * i / steps;
+    const py = H - PAD.b - (ds[i] / maxD) * ph * 0.88;
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  });
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // μ dashed line
+  const mux = PAD.l + (S.mu - xMin) / (xMax - xMin) * pw;
+  ctx.setLineDash([5, 4]);
+  ctx.strokeStyle = 'rgba(56,189,248,0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(mux, PAD.t + 4); ctx.lineTo(mux, H - PAD.b); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label
+  ctx.fillStyle = '#38bdf8';
+  ctx.font = 'bold 9px DM Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText(`μ = ${S.mu}   σ = ${S.sigma}`, mux, PAD.t + 2);
+}
+
+// ── Sample dot histogram (stacked dots — y encodes count, no meaningless jitter) ──
+function drawSampleDots() {
+  const { ctx, W, H } = initCanvas('cvSamp');
+  ctx.clearRect(0, 0, W, H);
+  const [xMin, xMax] = getPopRange();
+
+  if (!S.lastSample.length) {
+    drawAxes(ctx, W, H, xMin, xMax);
+    ctx.fillStyle = '#253448'; ctx.font = '10px DM Mono'; ctx.textAlign = 'center';
+    ctx.fillText('Draw a sample to see data points here', W / 2, H / 2);
+    return;
+  }
+
+  const pw  = W - PAD.l - PAD.r;
+  const ph  = H - PAD.t - PAD.b;
+
+  // Choose bin count so column width ≈ dot diameter
+  const r0    = 4.5;
+  const nCols = Math.max(8, Math.floor(pw / (r0 * 2 + 1)));
+  const colW  = (xMax - xMin) / nCols;
+
+  // Sort each value into a column stack
+  const stacks = Array.from({ length: nCols }, () => []);
+  S.lastSample.forEach(v => {
+    const col = Math.min(nCols - 1, Math.max(0, Math.floor((v - xMin) / colW)));
+    stacks[col].push(v);
+  });
+
+  // Scale dot radius down if tallest stack would overflow
+  const maxStack = Math.max(...stacks.map(s => s.length), 1);
+  const r = Math.min(r0, (ph * 0.88) / (maxStack * 2 + 1));
+
+  drawAxes(ctx, W, H, xMin, xMax);
+
+  // Draw stacked dots bottom-up; x = column centre, y stacks upward
+  stacks.forEach((vals, col) => {
+    if (!vals.length) return;
+    const cx = PAD.l + (col + 0.5) * pw / nCols;
+    vals.forEach((_, row) => {
+      const cy = H - PAD.b - r - row * (r * 2 + 1);
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(244,114,182,0.78)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(244,114,182,0.25)';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    });
+  });
+
+  // Stat marker
+  const sv = computeStat(S.lastSample);
+  const sx = PAD.l + (sv - xMin) / (xMax - xMin) * pw;
+  ctx.strokeStyle = '#f472b6'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+  ctx.beginPath(); ctx.moveTo(sx, PAD.t + 4); ctx.lineTo(sx, H - PAD.b); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#f472b6'; ctx.font = 'bold 9px DM Mono'; ctx.textAlign = 'center';
+  const lbl = S.stat === 'mean' ? `x\u0304 = ${sv.toFixed(2)}` : `${S.stat} = ${sv.toFixed(2)}`;
+  ctx.fillText(lbl, sx, PAD.t + 2);
+}
+
+// ── Sampling distribution histogram ───────────────────────────────────────────
+function drawSamplingDist() {
+  const { ctx, W, H } = initCanvas('cvSD');
+  ctx.clearRect(0, 0, W, H);
+
+  if (S.samples.length < 2) {
+    const [xMin, xMax] = getPopRange();
+    drawAxes(ctx, W, H, xMin, xMax);
+    ctx.fillStyle = '#253448'; ctx.font = '10px DM Mono'; ctx.textAlign = 'center';
+    ctx.fillText('Run the simulation to see the sampling distribution emerge', W / 2, H / 2);
+    return;
+  }
+
+  // Axis range from actual samples (avoid spread operator crash on large arrays)
+  let smin = Infinity, smax = -Infinity;
+  for (const v of S.samples) { if (v < smin) smin = v; if (v > smax) smax = v; }
+  const spread = Math.max(smax - smin, 0.01);
+  const pad    = spread * 0.28;
+  const xMin   = smin - pad;
+  const xMax   = smax + pad;
+  const pw     = W - PAD.l - PAD.r;
+  const ph     = H - PAD.t - PAD.b;
+
+  drawAxes(ctx, W, H, xMin, xMax);
+
+  // Histogram
+  const counts = new Array(BINS).fill(0);
+  S.samples.forEach(v => {
+    const i = Math.floor((v - xMin) / (xMax - xMin) * BINS);
+    if (i >= 0 && i < BINS) counts[i]++;
+  });
+  const maxCount = Math.max(...counts, 1);
+  const bw = pw / BINS;
+
+  const grad = ctx.createLinearGradient(0, PAD.t, 0, H - PAD.b);
+  grad.addColorStop(0, 'rgba(167,139,250,0.78)');
+  grad.addColorStop(1, 'rgba(167,139,250,0.12)');
+
+  counts.forEach((c, i) => {
+    if (!c) return;
+    const bh = (c / maxCount) * ph * 0.88;
+    const bx = PAD.l + i * bw;
+    const by = H - PAD.b - bh;
+    ctx.fillStyle = grad;
+    ctx.fillRect(bx + 0.5, by, bw - 1, bh);
+    ctx.strokeStyle = 'rgba(167,139,250,0.35)';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(bx + 0.5, by, bw - 1, bh);
+  });
+
+  document.getElementById('sv-count').textContent = S.samples.length;
+
+  // Normal overlay – scale so that normal peak aligns with histogram peak
+  const smean = S.samples.reduce((a, x) => a + x, 0) / S.samples.length;
+  const ssd   = Math.sqrt(S.samples.reduce((a, x) => a + (x - smean) ** 2, 0) / S.samples.length);
+
+  if (ssd > 0) {
+    // Scale normal curve so its peak matches the tallest histogram bar in pixels
+    const normalPeak = 1 / (ssd * SQRT2PI);
+    const histPeakPx = ph * 0.88;
+
+    ctx.beginPath();
+    let first = true;
+    for (let px = PAD.l; px <= W - PAD.r; px++) {
+      const x  = xMin + (px - PAD.l) / pw * (xMax - xMin);
+      const d  = Math.exp(-0.5 * ((x - smean) / ssd) ** 2) / (ssd * SQRT2PI);
+      const py = H - PAD.b - (d / normalPeak) * histPeakPx;
+      first ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+      first = false;
+    }
+    ctx.strokeStyle = '#34d399';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.stroke();
+
+    // Mean marker
+    const mx = PAD.l + (smean - xMin) / (xMax - xMin) * pw;
+    ctx.strokeStyle = 'rgba(52,211,153,0.55)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath(); ctx.moveTo(mx, PAD.t + 4); ctx.lineTo(mx, H - PAD.b); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#34d399'; ctx.font = 'bold 9px DM Mono'; ctx.textAlign = 'center';
+    ctx.fillText(`mean = ${smean.toFixed(2)}`, mx, PAD.t + 2);
+
+    // Update live stats
+    document.getElementById('sv-smean').textContent = smean.toFixed(3);
+    document.getElementById('sv-ssd').textContent   = ssd.toFixed(3);
+    if (S.stat === 'mean') {
+      document.getElementById('sv-se').textContent = (S.sigma / Math.sqrt(S.n)).toFixed(3);
+    } else {
+      document.getElementById('sv-se').textContent = '—';
+    }
+  }
+}
+
+// ── Render all ─────────────────────────────────────────────────────────────────
+function render() {
+  drawPop();
+  drawSampleDots();
+  drawSamplingDist();
+}
+
+// ── Simulation ─────────────────────────────────────────────────────────────────
+function addSamples(k) {
+  // First sample: update dot plot too
+  const first = drawSample(S.n);
+  S.lastSample = first;
+  S.samples.push(computeStat(first));
+
+  // Rest: only compute stat
+  const remaining = Math.min(k - 1, S.total - S.samples.length);
+  for (let i = 0; i < remaining; i++) {
+    S.samples.push(computeStat(drawSample(S.n)));
+  }
+}
+
+function tick() {
+  if (!S.running) return;
+  if (S.samples.length >= S.total) { stopRun(); return; }
+  const { batch } = SPEED[S.speed];
+  addSamples(Math.min(batch, S.total - S.samples.length));
+  document.getElementById('progBar').style.width = (S.samples.length / S.total * 100) + '%';
+  render();
+  S.rafId = requestAnimationFrame(tick);
+}
+
+function startRun() {
+  if (S.running) return;
+  S.running = true;
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('runStatus').textContent = '● Simulating...';
+  document.getElementById('runStatus').className = 'run-status running';
+  S.rafId = requestAnimationFrame(tick);
+}
+
+function stopRun() {
+  S.running = false;
+  cancelAnimationFrame(S.rafId);
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('runStatus').textContent = '';
+  document.getElementById('runStatus').className = 'run-status';
+  document.getElementById('progBar').style.width = '0%';
+  render();
+}
+
+function reset() {
+  stopRun();
+  S.samples = []; S.lastSample = [];
+  ['sv-smean','sv-ssd','sv-se'].forEach(id => document.getElementById(id).textContent = '—');
+  document.getElementById('sv-count').textContent = '0';
+  render();
+}
+
+// ── Controls ───────────────────────────────────────────────────────────────────
+function bindSlider(sliderId, key, labelId, format) {
+  const el = document.getElementById(sliderId);
+  el.addEventListener('input', () => {
+    S[key] = +el.value;
+    document.getElementById(labelId).textContent = format ? format(+el.value) : +el.value;
+    document.getElementById('sv-mu').textContent    = S.mu;
+    document.getElementById('sv-sigma').textContent = S.sigma;
+    if (key === 'n') document.getElementById('nLabel').textContent = `n = ${S.n} obs.`;
+    reset();
+  });
+}
+
+bindSlider('smu',    'mu',    'lmu');
+bindSlider('ssigma', 'sigma', 'lsigma');
+bindSlider('sn',     'n',     'ln');
+bindSlider('stotal', 'total', 'ltotal');
+
+document.getElementById('sspeed').addEventListener('input', e => {
+  S.speed = +e.target.value;
+  document.getElementById('lspeed').textContent = SPEED[S.speed].label;
+});
+document.getElementById('distSel').addEventListener('change', e => { S.dist = e.target.value; reset(); });
+document.getElementById('statSel').addEventListener('change', e => { S.stat = e.target.value; reset(); });
+
+document.getElementById('runBtn').addEventListener('click', () => {
+  if (S.samples.length >= S.total) reset();
+  startRun();
+});
+document.getElementById('stepBtn').addEventListener('click', () => {
+  if (S.running) stopRun();
+  addSamples(1);
+  render();
+});
+document.getElementById('resetBtn').addEventListener('click', reset);
+window.addEventListener('resize', render);
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+// Wait one frame so layout is fully painted before reading clientWidth/Height
+requestAnimationFrame(() => { render(); });
+</script>
+</body>
+</html>
